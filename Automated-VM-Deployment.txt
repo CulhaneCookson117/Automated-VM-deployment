@@ -1,0 +1,53 @@
+NUM_NODES = 4
+
+Vagrant.configure("2") do |config|
+  puts "Select the operating system for the VMs:"
+  puts "1. Ubuntu 22.04 LTS"
+  puts "2. CentOS 8"
+  puts "3. Debian 10"
+  choice = gets.chomp.to_i
+
+  case choice
+  when 1
+    os_choice = "ubuntu/jammy64"
+  when 2
+    os_choice = "centos/8"
+  when 3
+    os_choice = "debian/buster64"
+  else
+    puts "Invalid choice. Defaulting to Ubuntu 22.04 LTS."
+    os_choice = "ubuntu/jammy64"
+  end
+
+  config.vm.box = os_choice
+  
+  (1..NUM_NODES).each do |i|
+    config.vm.define "node#{i}" do |node|
+      node.vm.hostname = "node#{i}"
+      node.vm.network "private_network", ip: "192.168.56.#{100 + i}"
+      
+      node.vm.provider "virtualbox" do |vb|
+        vb.memory = "512"
+        vb.customize ["createhd", "--filename", "./disk#{i}.vdi", "--size", 20480] # 20GB disk size
+        vb.customize ["storageattach", :id, "--storagectl", "SATA Controller", "--port", 1, "--device", 0, "--type", "hdd", "--medium", "./disk#{i}.vdi"]
+      end
+
+      node.vm.provision "shell", inline: <<-SHELL
+        if [ "#{os_choice}" = "ubuntu/jammy64" ]; then
+          apt-get update
+          apt-get install -y ubuntu-desktop
+        elif [ "#{os_choice}" = "centos/8" ]; then
+          yum update -y
+          yum groupinstall -y "Server with GUI"
+        elif [ "#{os_choice}" = "debian/buster64" ]; then
+          apt-get update
+          apt-get install -y task-gnome-desktop
+        fi
+        
+        adduser --disabled-password --gecos "" newuser
+        echo "newuser:password" | chpasswd
+        passwd -e newuser
+      SHELL
+    end
+  end
+end
