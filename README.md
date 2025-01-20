@@ -1,5 +1,3 @@
-# Automated-VM-deployment
-The following Vagrant file allows and automated deployment of 4 VMs with optional operating system. The following code can be Scalable for user personal project.
 # Vagrant Multi-OS Cluster
 
 It sets up a cluster of 4 virtual machines with Vagrant and VirtualBox, allowing users to choose between Ubuntu 22.04 LTS, CentOS 8, or Debian 10.
